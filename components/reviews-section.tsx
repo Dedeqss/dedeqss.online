@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { useState, useEffect, useCallback, useRef } from "react"
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion"
 import useSWR, { mutate } from "swr"
 
 interface Review {
@@ -20,31 +20,77 @@ export function ReviewsSection() {
   })
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isFormOpen, setIsFormOpen] = useState(false)
+  const [isPaused, setIsPaused] = useState(false)
+  const [direction, setDirection] = useState(1)
+  const progressRef = useRef<HTMLDivElement>(null)
+  const progress = useMotionValue(0)
+  const progressWidth = useTransform(progress, [0, 100], ["0%", "100%"])
 
-  // Auto-rotate reviews
+  // Auto-rotate reviews with progress bar
   useEffect(() => {
-    if (!reviews || reviews.length <= 1) return
+    if (!reviews || reviews.length <= 1 || isPaused) {
+      progress.set(0)
+      return
+    }
     
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % reviews.length)
-    }, 5000)
+    // Animate progress bar
+    const controls = animate(progress, 100, {
+      duration: 6,
+      ease: "linear",
+      onComplete: () => {
+        setDirection(1)
+        setCurrentIndex((prev) => (prev + 1) % reviews.length)
+        progress.set(0)
+      }
+    })
 
-    return () => clearInterval(interval)
-  }, [reviews])
+    return () => controls.stop()
+  }, [reviews, currentIndex, isPaused, progress])
 
   const goToReview = useCallback((index: number) => {
+    if (index > currentIndex) {
+      setDirection(1)
+    } else {
+      setDirection(-1)
+    }
     setCurrentIndex(index)
-  }, [])
+    progress.set(0)
+  }, [currentIndex, progress])
 
   const goToPrevious = useCallback(() => {
     if (!reviews) return
+    setDirection(-1)
     setCurrentIndex((prev) => (prev - 1 + reviews.length) % reviews.length)
-  }, [reviews])
+    progress.set(0)
+  }, [reviews, progress])
 
   const goToNext = useCallback(() => {
     if (!reviews) return
+    setDirection(1)
     setCurrentIndex((prev) => (prev + 1) % reviews.length)
-  }, [reviews])
+    progress.set(0)
+  }, [reviews, progress])
+
+  const slideVariants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 300 : -300,
+      opacity: 0,
+      scale: 0.9,
+      rotateY: direction > 0 ? 15 : -15,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+      scale: 1,
+      rotateY: 0,
+    },
+    exit: (direction: number) => ({
+      x: direction > 0 ? -300 : 300,
+      opacity: 0,
+      scale: 0.9,
+      rotateY: direction > 0 ? -15 : 15,
+    }),
+  }
 
   return (
     <section className="py-20 px-4 relative overflow-hidden">
@@ -68,7 +114,11 @@ export function ReviewsSection() {
         </motion.div>
 
         {/* Reviews carousel */}
-        <div className="relative">
+        <div 
+          className="relative"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+        >
           {isLoading ? (
             <div className="cyber-card rounded-xl p-8 text-center">
               <div className="animate-pulse space-y-4">
@@ -84,62 +134,105 @@ export function ReviewsSection() {
           ) : reviews && reviews.length > 0 ? (
             <>
               {/* Navigation arrows */}
-              <button
+              <motion.button
                 onClick={goToPrevious}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-12 z-10 p-2 rounded-full bg-secondary/50 border border-border hover:border-neon-purple/50 hover:bg-neon-purple/10 transition-all"
+                whileHover={{ scale: 1.1, x: -2 }}
+                whileTap={{ scale: 0.95 }}
+                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-12 z-10 p-3 rounded-full bg-secondary/50 border border-border hover:border-neon-purple hover:bg-neon-purple/20 hover:shadow-lg hover:shadow-neon-purple/25 transition-all duration-300"
                 aria-label="Previous review"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
-              </button>
+              </motion.button>
               
-              <button
+              <motion.button
                 onClick={goToNext}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-12 z-10 p-2 rounded-full bg-secondary/50 border border-border hover:border-neon-purple/50 hover:bg-neon-purple/10 transition-all"
+                whileHover={{ scale: 1.1, x: 2 }}
+                whileTap={{ scale: 0.95 }}
+                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-12 z-10 p-3 rounded-full bg-secondary/50 border border-border hover:border-neon-purple hover:bg-neon-purple/20 hover:shadow-lg hover:shadow-neon-purple/25 transition-all duration-300"
                 aria-label="Next review"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
-              </button>
+              </motion.button>
 
-              {/* Review card */}
-              <div className="overflow-hidden">
-                <AnimatePresence mode="wait">
+              {/* Review card with 3D effect */}
+              <div className="overflow-hidden perspective-1000">
+                <AnimatePresence mode="wait" custom={direction}>
                   <motion.div
                     key={reviews[currentIndex].id}
-                    initial={{ opacity: 0, x: 50 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -50 }}
-                    transition={{ duration: 0.3 }}
-                    className="cyber-card rounded-xl p-8"
+                    custom={direction}
+                    variants={slideVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    transition={{ 
+                      type: "spring",
+                      stiffness: 300,
+                      damping: 30,
+                      opacity: { duration: 0.2 }
+                    }}
+                    className="cyber-card rounded-xl p-8 relative overflow-hidden"
                   >
-                    {/* Stars */}
-                    <div className="flex justify-center gap-1 mb-6">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <svg
+                    {/* Animated glow effect */}
+                    <motion.div 
+                      className="absolute inset-0 bg-gradient-to-r from-neon-purple/0 via-neon-purple/10 to-neon-purple/0"
+                      animate={{
+                        x: ["-100%", "100%"],
+                      }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        repeatDelay: 2,
+                        ease: "easeInOut"
+                      }}
+                    />
+
+                    {/* Stars with stagger animation */}
+                    <div className="flex justify-center gap-1 mb-6 relative z-10">
+                      {[1, 2, 3, 4, 5].map((star, i) => (
+                        <motion.svg
                           key={star}
+                          initial={{ scale: 0, rotate: -180 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          transition={{ 
+                            delay: i * 0.1,
+                            type: "spring",
+                            stiffness: 500,
+                            damping: 15
+                          }}
                           className={`w-6 h-6 ${
                             star <= reviews[currentIndex].rating
-                              ? "text-acid-green"
+                              ? "text-acid-green drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]"
                               : "text-muted"
                           }`}
                           fill="currentColor"
                           viewBox="0 0 24 24"
                         >
                           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                        </svg>
+                        </motion.svg>
                       ))}
                     </div>
 
-                    {/* Review text */}
-                    <blockquote className="text-lg md:text-xl text-center text-foreground mb-6 italic">
+                    {/* Review text with typing effect */}
+                    <motion.blockquote 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                      className="text-lg md:text-xl text-center text-foreground mb-6 italic relative z-10"
+                    >
                       &quot;{reviews[currentIndex].review_text}&quot;
-                    </blockquote>
+                    </motion.blockquote>
 
                     {/* Author */}
-                    <div className="text-center">
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 }}
+                      className="text-center relative z-10"
+                    >
                       <p className="font-semibold text-neon-purple">
                         {reviews[currentIndex].user_name}
                       </p>
@@ -150,25 +243,53 @@ export function ReviewsSection() {
                           day: "numeric",
                         })}
                       </p>
-                    </div>
+                    </motion.div>
                   </motion.div>
                 </AnimatePresence>
               </div>
 
-              {/* Dots navigation */}
-              <div className="flex justify-center gap-2 mt-6">
-                {reviews.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => goToReview(index)}
-                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                      index === currentIndex
-                        ? "bg-neon-purple w-6"
-                        : "bg-muted hover:bg-muted-foreground"
-                    }`}
-                    aria-label={`Go to review ${index + 1}`}
+              {/* Progress bar and dots navigation */}
+              <div className="mt-6 space-y-4">
+                {/* Auto-scroll progress bar */}
+                <div className="h-1 bg-secondary rounded-full overflow-hidden mx-auto max-w-xs">
+                  <motion.div
+                    ref={progressRef}
+                    className="h-full bg-gradient-to-r from-neon-purple to-acid-green rounded-full"
+                    style={{ width: progressWidth }}
                   />
-                ))}
+                </div>
+
+                {/* Dots navigation */}
+                <div className="flex justify-center gap-2">
+                  {reviews.map((_, index) => (
+                    <motion.button
+                      key={index}
+                      onClick={() => goToReview(index)}
+                      whileHover={{ scale: 1.2 }}
+                      whileTap={{ scale: 0.9 }}
+                      className={`h-2 rounded-full transition-all duration-500 ${
+                        index === currentIndex
+                          ? "bg-gradient-to-r from-neon-purple to-acid-green w-8 shadow-lg shadow-neon-purple/30"
+                          : "bg-muted hover:bg-muted-foreground w-2"
+                      }`}
+                      aria-label={`Go to review ${index + 1}`}
+                    />
+                  ))}
+                </div>
+
+                {/* Pause indicator */}
+                <AnimatePresence>
+                  {isPaused && reviews.length > 1 && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      className="text-center text-xs text-muted-foreground"
+                    >
+                      Paused - hover to keep viewing
+                    </motion.p>
+                  )}
+                </AnimatePresence>
               </div>
             </>
           ) : (
@@ -186,12 +307,14 @@ export function ReviewsSection() {
           transition={{ delay: 0.2 }}
           className="text-center mt-8"
         >
-          <button
+          <motion.button
             onClick={() => setIsFormOpen(true)}
-            className="px-6 py-3 rounded-lg bg-neon-purple text-primary-foreground font-medium hover:bg-neon-purple/80 transition-all duration-300 shadow-lg shadow-neon-purple/25 hover:shadow-neon-purple/40"
+            whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(124, 58, 237, 0.5)" }}
+            whileTap={{ scale: 0.95 }}
+            className="px-6 py-3 rounded-lg bg-neon-purple text-primary-foreground font-medium transition-all duration-300 shadow-lg shadow-neon-purple/25"
           >
             Leave a Review
-          </button>
+          </motion.button>
         </motion.div>
       </div>
 
@@ -260,23 +383,26 @@ function ReviewFormModal({
       onClick={onClose}
     >
       <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
+        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
         className="cyber-card rounded-xl p-6 md:p-8 w-full max-w-md"
       >
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-foreground">Leave a Review</h3>
-          <button
+          <motion.button
             onClick={onClose}
+            whileHover={{ scale: 1.1, rotate: 90 }}
+            whileTap={{ scale: 0.9 }}
             className="p-2 rounded-lg hover:bg-secondary transition-colors"
             aria-label="Close"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
-          </button>
+          </motion.button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -302,22 +428,26 @@ function ReviewFormModal({
             </label>
             <div className="flex gap-2">
               {[1, 2, 3, 4, 5].map((star) => (
-                <button
+                <motion.button
                   key={star}
                   type="button"
                   onClick={() => setFormData({ ...formData, rating: star })}
-                  className="p-1 transition-transform hover:scale-110"
+                  whileHover={{ scale: 1.2 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="p-1"
                 >
                   <svg
                     className={`w-8 h-8 ${
-                      star <= formData.rating ? "text-acid-green" : "text-muted"
+                      star <= formData.rating 
+                        ? "text-acid-green drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]" 
+                        : "text-muted"
                     } transition-colors`}
                     fill="currentColor"
                     viewBox="0 0 24 24"
                   >
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                   </svg>
-                </button>
+                </motion.button>
               ))}
             </div>
           </div>
@@ -342,16 +472,35 @@ function ReviewFormModal({
           </div>
 
           {error && (
-            <p className="text-sm text-destructive">{error}</p>
+            <motion.p 
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="text-sm text-destructive"
+            >
+              {error}
+            </motion.p>
           )}
 
-          <button
+          <motion.button
             type="submit"
             disabled={isSubmitting}
-            className="w-full px-6 py-3 rounded-lg bg-neon-purple text-primary-foreground font-medium hover:bg-neon-purple/80 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="w-full px-6 py-3 rounded-lg bg-neon-purple text-primary-foreground font-medium hover:bg-neon-purple/80 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-neon-purple/25"
           >
-            {isSubmitting ? "Submitting..." : "Submit Review"}
-          </button>
+            {isSubmitting ? (
+              <span className="flex items-center justify-center gap-2">
+                <motion.span
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+                />
+                Submitting...
+              </span>
+            ) : (
+              "Submit Review"
+            )}
+          </motion.button>
         </form>
       </motion.div>
     </motion.div>

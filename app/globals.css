@@ -113,6 +113,9 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  /* Custom cyber colors */
+  --color-neon-purple: oklch(0.65 0.25 285);
+  --color-acid-green: oklch(0.7 0.2 145);
 }
 
 @layer base {
@@ -122,4 +125,28 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Animated border trace for tabs */
+@keyframes border-trace {
+  0% {
+    stroke-dashoffset: 300;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-border-trace {
+  animation: border-trace 2s linear infinite;
+}
+
+/* Cyber card styles */
+.cyber-card {
+  @apply bg-card border border-border transition-all duration-300;
+}
+
+.cyber-card:hover {
+  @apply border-neon-purple/50;
+  box-shadow: 0 0 20px oklch(0.65 0.25 285 / 0.15);
 }

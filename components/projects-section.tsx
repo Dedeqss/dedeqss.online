@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 
 export interface Project {
@@ -19,6 +19,7 @@ interface ProjectsSectionProps {
 
 export function ProjectsSection({ projects, categories }: ProjectsSectionProps) {
   const [activeCategory, setActiveCategory] = useState<string>("All")
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null)
 
   const filteredProjects = activeCategory === "All"
     ? projects
@@ -176,7 +177,12 @@ export function ProjectsSection({ projects, categories }: ProjectsSectionProps) 
         >
           <AnimatePresence mode="popLayout">
             {filteredProjects.map((project, index) => (
-              <ProjectCard key={project.id} project={project} index={index} />
+              <ProjectCard 
+                key={project.id} 
+                project={project} 
+                index={index} 
+                onSelect={() => setSelectedProject(project)}
+              />
             ))}
           </AnimatePresence>
         </motion.div>
@@ -191,12 +197,50 @@ export function ProjectsSection({ projects, categories }: ProjectsSectionProps) 
           </motion.p>
         )}
       </div>
+
+      {/* Project Detail Modal */}
+      <AnimatePresence>
+        {selectedProject && (
+          <ProjectModal 
+            project={selectedProject} 
+            onClose={() => setSelectedProject(null)} 
+          />
+        )}
+      </AnimatePresence>
     </section>
   )
 }
 
-function ProjectCard({ project, index }: { project: Project; index: number }) {
+function ProjectCard({ 
+  project, 
+  index, 
+  onSelect 
+}: { 
+  project: Project; 
+  index: number;
+  onSelect: () => void;
+}) {
   const [isHovered, setIsHovered] = useState(false)
+  const [clickCount, setClickCount] = useState(0)
+  const [clickTimer, setClickTimer] = useState<NodeJS.Timeout | null>(null)
+
+  const handleClick = useCallback(() => {
+    if (clickTimer) {
+      // Double click detected
+      clearTimeout(clickTimer)
+      setClickTimer(null)
+      setClickCount(0)
+      onSelect()
+    } else {
+      // First click
+      setClickCount(1)
+      const timer = setTimeout(() => {
+        setClickCount(0)
+        setClickTimer(null)
+      }, 300)
+      setClickTimer(timer)
+    }
+  }, [clickTimer, onSelect])
 
   return (
     <motion.article
@@ -207,7 +251,9 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
       transition={{ delay: index * 0.1 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="cyber-card rounded-xl overflow-hidden group cursor-default"
+      onClick={handleClick}
+      whileTap={{ scale: 0.98 }}
+      className="cyber-card rounded-xl overflow-hidden group cursor-pointer select-none"
     >
       {/* Project header with icon */}
       <div className="relative h-32 bg-gradient-to-br from-neon-purple/20 via-secondary/50 to-acid-green/10 overflow-hidden">
@@ -240,6 +286,15 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
             </span>
           </motion.div>
         </div>
+
+        {/* Double tap hint */}
+        <motion.div
+          initial={false}
+          animate={{ opacity: isHovered ? 1 : 0 }}
+          className="absolute bottom-2 left-1/2 -translate-x-1/2 px-2 py-1 rounded-full bg-background/80 backdrop-blur-sm border border-neon-purple/30"
+        >
+          <span className="text-[10px] text-neon-purple font-mono">Double tap to expand</span>
+        </motion.div>
 
         {/* Glowing edges on hover */}
         <motion.div
@@ -295,5 +350,197 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
         </div>
       </div>
     </motion.article>
+  )
+}
+
+function ProjectModal({ project, onClose }: { project: Project; onClose: () => void }) {
+  return (
+    <>
+      {/* Backdrop */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="fixed inset-0 bg-background/80 backdrop-blur-md z-50"
+      />
+
+      {/* Modal */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8, y: 50 }}
+        animate={{ 
+          opacity: 1, 
+          scale: 1, 
+          y: 0,
+          transition: {
+            type: "spring",
+            damping: 25,
+            stiffness: 300
+          }
+        }}
+        exit={{ 
+          opacity: 0, 
+          scale: 0.8, 
+          y: 50,
+          transition: { duration: 0.2 }
+        }}
+        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-lg z-50"
+      >
+        {/* Animated border glow */}
+        <motion.div
+          animate={{
+            boxShadow: [
+              '0 0 20px oklch(0.65 0.25 285 / 0.3), 0 0 40px oklch(0.65 0.25 285 / 0.1)',
+              '0 0 30px oklch(0.65 0.25 285 / 0.5), 0 0 60px oklch(0.65 0.25 285 / 0.2)',
+              '0 0 20px oklch(0.65 0.25 285 / 0.3), 0 0 40px oklch(0.65 0.25 285 / 0.1)',
+            ]
+          }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -inset-[1px] rounded-2xl bg-gradient-to-br from-neon-purple via-purple-500 to-acid-green"
+        />
+
+        <div className="relative bg-card rounded-2xl overflow-hidden">
+          {/* Header */}
+          <div className="relative h-40 bg-gradient-to-br from-neon-purple/30 via-secondary/50 to-acid-green/20 overflow-hidden">
+            {/* Animated particles */}
+            {[...Array(6)].map((_, i) => (
+              <motion.div
+                key={i}
+                animate={{
+                  y: [-20, -100],
+                  x: [0, (i % 2 === 0 ? 1 : -1) * 20],
+                  opacity: [0, 1, 0],
+                }}
+                transition={{
+                  duration: 2 + i * 0.5,
+                  repeat: Infinity,
+                  delay: i * 0.3,
+                }}
+                className="absolute w-1 h-1 rounded-full bg-neon-purple"
+                style={{ left: `${15 + i * 15}%`, bottom: '20%' }}
+              />
+            ))}
+
+            {/* Large project initial */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", damping: 15, delay: 0.1 }}
+                className="w-24 h-24 rounded-2xl bg-neon-purple/30 backdrop-blur-sm flex items-center justify-center border-2 border-neon-purple/50"
+              >
+                <span className="text-4xl font-bold text-neon-purple">
+                  {project.name.charAt(0)}
+                </span>
+              </motion.div>
+            </div>
+
+            {/* Close button */}
+            <motion.button
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 }}
+              onClick={onClose}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-background/50 backdrop-blur-sm border border-border flex items-center justify-center hover:bg-background hover:border-neon-purple/50 transition-colors group"
+            >
+              <svg className="w-4 h-4 text-muted-foreground group-hover:text-neon-purple transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </motion.button>
+
+            {/* Category badge */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="absolute top-4 left-4 px-3 py-1 rounded-full bg-neon-purple/20 border border-neon-purple/50 backdrop-blur-sm"
+            >
+              <span className="text-xs font-mono text-neon-purple">{project.category}</span>
+            </motion.div>
+          </div>
+
+          {/* Content */}
+          <div className="p-6">
+            <motion.h3
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-2xl font-bold mb-3 text-foreground"
+            >
+              {project.name}
+            </motion.h3>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className="text-muted-foreground mb-6 leading-relaxed"
+            >
+              {project.description}
+            </motion.p>
+
+            {/* Tags */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="flex flex-wrap gap-2 mb-6"
+            >
+              {project.tags.map((tag, i) => (
+                <motion.span
+                  key={tag}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.35 + i * 0.05 }}
+                  className="px-3 py-1 rounded-lg text-sm bg-neon-purple/10 text-neon-purple border border-neon-purple/30"
+                >
+                  {tag}
+                </motion.span>
+              ))}
+            </motion.div>
+
+            {/* Get in contact button */}
+            <motion.a
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              href="https://guns.lol/dedeqss.22"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-primary-foreground overflow-hidden"
+            >
+              {/* Button background with animated gradient */}
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-neon-purple via-purple-500 to-neon-purple bg-[length:200%_100%]"
+                animate={{ backgroundPosition: ['0% 0%', '100% 0%', '0% 0%'] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+              />
+              
+              {/* Glow effect */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl bg-neon-purple/50" />
+              
+              {/* Button content */}
+              <span className="relative z-10 flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                Get in Contact
+              </span>
+              
+              {/* Shine effect on hover */}
+              <motion.div
+                className="absolute inset-0 opacity-0 group-hover:opacity-100"
+                initial={false}
+                animate={{ x: ['-100%', '100%'] }}
+                transition={{ duration: 1, repeat: Infinity, repeatDelay: 1 }}
+                style={{
+                  background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
+                }}
+              />
+            </motion.a>
+          </div>
+        </div>
+      </motion.div>
+    </>
   )
 }

@@ -11,23 +11,6 @@ export const metadata: Metadata = {
   description: 'Full-stack developer proficient in Python, JavaScript, Java, and Lua. Building high-performance tools, custom Discord bots, and optimized Minecraft servers.',
   keywords: ['developer', 'software', 'portfolio', 'discord bots', 'minecraft', 'roblox', 'python', 'javascript', 'lua'],
   authors: [{ name: 'Dede' }],
-  icons: {
-    icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
-    ],
-    apple: '/apple-icon.png',
-  },
   openGraph: {
     title: 'Dede Portfolio',
     description: 'Full-stack developer proficient in Python, JavaScript, Java, and Lua.',

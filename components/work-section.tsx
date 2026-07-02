@@ -31,11 +31,11 @@ export function WorkSection({ groups, gunsUrl }: WorkSectionProps) {
   return (
     <section id="work" className="relative mx-auto max-w-5xl px-6 py-20 md:py-28">
       <div className="mb-12 flex flex-col gap-2">
-        <span className="font-mono text-xs uppercase tracking-[0.25em] text-muted-foreground">
+        <span className="font-mono text-xs uppercase tracking-[0.25em] text-accent">
           01 — Selected work
         </span>
         <h2 className="font-serif text-4xl tracking-tight text-foreground md:text-5xl">
-          What I build
+          Things I&apos;ve built
         </h2>
       </div>
 
@@ -55,6 +55,9 @@ export function WorkSection({ groups, gunsUrl }: WorkSectionProps) {
                 }`}
               >
                 {g.label}
+              </span>
+              <span className="ml-2 font-mono text-xs text-muted-foreground/40">
+                {String(g.projects.length).padStart(2, "0")}
               </span>
               {isActive && (
                 <motion.span
@@ -76,114 +79,116 @@ export function WorkSection({ groups, gunsUrl }: WorkSectionProps) {
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
         >
-          <p className="mb-8 max-w-lg text-pretty leading-relaxed text-muted-foreground">
+          <p className="mb-10 max-w-lg text-pretty leading-relaxed text-muted-foreground">
             {activeGroup.blurb}
           </p>
 
-          <ul className="divide-y divide-border">
+          <div className="grid gap-4 sm:grid-cols-2">
             {activeGroup.projects.map((project, i) => (
-              <ProjectRow key={project.id} project={project} index={i} gunsUrl={gunsUrl} />
+              <ProjectCard key={project.id} project={project} index={i} />
             ))}
-          </ul>
+          </div>
+
+          {/* Closing note — "I've done more" */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="mt-10 flex flex-col items-start gap-4 border-t border-dashed border-border pt-8 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <p className="max-w-md text-pretty leading-relaxed text-muted-foreground">
+              <span className="text-foreground">And plenty more.</span> These are just
+              the highlights — I&apos;ve shipped countless private commissions, tools, and
+              systems that aren&apos;t listed here.
+            </p>
+            <a
+              href={gunsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group inline-flex shrink-0 items-center gap-2 rounded-full bg-accent px-5 py-2.5 font-mono text-xs uppercase tracking-wider text-accent-foreground transition-transform hover:scale-105"
+            >
+              Ask about the rest
+              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" className="transition-transform group-hover:translate-x-0.5">
+                <path d="M3 7H11M11 7L7 3M11 7L7 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </a>
+          </motion.div>
         </motion.div>
       </AnimatePresence>
     </section>
   )
 }
 
-function ProjectRow({
-  project,
-  index,
-  gunsUrl,
-}: {
-  project: Project
-  index: number
-  gunsUrl: string
-}) {
+function ProjectCard({ project, index }: { project: Project; index: number }) {
   const [open, setOpen] = useState(false)
-  const contactHref = project.link ?? gunsUrl
 
   return (
-    <motion.li
-      initial={{ opacity: 0, y: 14 }}
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{ delay: index * 0.05, duration: 0.5 }}
+      className="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card/40 p-5 transition-colors hover:border-border-strong"
     >
+      {/* Accent corner glow on hover */}
+      <div className="pointer-events-none absolute -right-16 -top-16 h-32 w-32 rounded-full bg-accent/0 blur-3xl transition-colors duration-500 group-hover:bg-accent/10" />
+
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div className="flex items-baseline gap-2">
+          <span className="font-mono text-xs text-muted-foreground/40">
+            {String(index + 1).padStart(2, "0")}
+          </span>
+          <h3 className="font-serif text-xl text-foreground transition-colors group-hover:text-accent">
+            {project.name}
+          </h3>
+        </div>
+        {project.link && (
+          <a
+            href={project.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Visit ${project.name}`}
+            className="mt-1 shrink-0 text-muted-foreground/50 transition-colors hover:text-accent"
+          >
+            <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
+              <path d="M3 11L11 3M11 3H5M11 3V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </a>
+        )}
+      </div>
+
+      {project.meta && (
+        <span className="mb-3 w-fit font-mono text-[11px] uppercase tracking-wider text-accent/80">
+          {project.meta}
+        </span>
+      )}
+
+      <p
+        className={`text-pretty text-sm leading-relaxed text-muted-foreground transition-all ${
+          open ? "" : "line-clamp-2"
+        }`}
+      >
+        {project.description}
+      </p>
+
       <button
         onClick={() => setOpen((o) => !o)}
-        className="group flex w-full items-baseline gap-4 py-6 text-left"
+        className="mt-2 w-fit font-mono text-[11px] uppercase tracking-wider text-muted-foreground/60 transition-colors hover:text-foreground"
       >
-        <span className="font-mono text-xs text-muted-foreground/50">
-          {String(index + 1).padStart(2, "0")}
-        </span>
-
-        <span className="flex-1">
-          <span className="flex items-center gap-3">
-            <span className="font-serif text-2xl text-foreground transition-colors group-hover:text-accent md:text-3xl">
-              {project.name}
-            </span>
-            {project.meta && (
-              <span className="hidden font-mono text-[11px] uppercase tracking-wider text-muted-foreground sm:inline">
-                {project.meta}
-              </span>
-            )}
-          </span>
-        </span>
-
-        <span
-          className={`shrink-0 text-muted-foreground transition-transform duration-300 ${
-            open ? "rotate-45 text-accent" : "group-hover:text-foreground"
-          }`}
-        >
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-            <path d="M9 3V15M3 9H15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-        </span>
+        {open ? "Show less" : "Read more"}
       </button>
 
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className="overflow-hidden"
+      <div className="mt-4 flex flex-wrap gap-1.5">
+        {project.tags.map((tag) => (
+          <span
+            key={tag}
+            className="rounded-full border border-border px-2.5 py-0.5 font-mono text-[10px] text-muted-foreground"
           >
-            <div className="pb-8 pl-8 md:pl-10">
-              <p className="max-w-xl text-pretty leading-relaxed text-muted-foreground">
-                {project.description}
-              </p>
-
-              <div className="mt-5 flex flex-wrap gap-2">
-                {project.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded-full border border-border px-3 py-1 font-mono text-[11px] text-muted-foreground"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-
-              {project.link && (
-                <a
-                  href={project.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-5 inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-accent hover:underline"
-                >
-                  Visit
-                  <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-                    <path d="M3 11L11 3M11 3H5M11 3V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </a>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.li>
+            {tag}
+          </span>
+        ))}
+      </div>
+    </motion.div>
   )
 }

@@ -8,10 +8,9 @@ import { Footer } from "@/components/footer"
 // ─────────────────────────────────────────────────────────────
 const CONFIG = {
   name: "Dede",
-  // Paste your NUMERIC Discord user ID here (enable Developer Mode in Discord,
-  // right-click your profile → Copy User ID). Also join discord.gg/lanyard so
-  // the live status can be tracked. Leaving this as-is shows a graceful fallback.
-  discordUserId: "000000000000000000",
+  // Live Discord status via Lanyard. You MUST join discord.gg/lanyard so the
+  // API can track your presence, otherwise it falls back gracefully.
+  discordUserId: "825846052463968266",
   discordUsername: "@04d4",
   gunsUrl: "https://guns.lol/dedeqss.22",
 }
@@ -23,6 +22,15 @@ const WORK: WorkGroup[] = [
     blurb:
       "Custom bots built for real communities — from high-traffic economy systems to anti-nuke protection handling thousands of events a day.",
     projects: [
+      {
+        id: "barbiepjfs",
+        name: "Barbiepjfs Bot",
+        meta: "Mass-DM bot",
+        description:
+          "A mass-DM bot built for discord.gg/barbiepjfs — handles bulk outreach and messaging automation reliably at scale.",
+        tags: ["Python", "Mass-DM", "Automation"],
+        link: "https://discord.gg/barbiepjfs",
+      },
       {
         id: "pawmade",
         name: "Pawmade Bot",

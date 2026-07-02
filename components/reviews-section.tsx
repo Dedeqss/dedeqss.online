@@ -1,331 +1,140 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
-import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion"
-import useSWR, { mutate } from "swr"
+import { useState, useEffect, useCallback } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface Review {
   id: string
   user_name: string
   review_text: string
   rating: number
+  role?: string | null
   created_at: string
+  owned?: boolean
 }
 
-const fetcher = (url: string) => fetch(url).then(res => res.json())
+interface ReviewsResponse {
+  reviews: Review[]
+  remaining: number
+}
+
+function Stars({ rating, size = 14 }: { rating: number; size?: number }) {
+  return (
+    <span className="inline-flex gap-0.5" aria-label={`${rating} out of 5 stars`}>
+      {[1, 2, 3, 4, 5].map((n) => (
+        <svg key={n} width={size} height={size} viewBox="0 0 20 20" fill="none">
+          <path
+            d="M10 1.5l2.47 5.01 5.53.8-4 3.9.94 5.51L10 14.13l-4.95 2.6.94-5.5-4-3.9 5.53-.81L10 1.5z"
+            fill={n <= rating ? "var(--color-accent)" : "none"}
+            stroke={n <= rating ? "var(--color-accent)" : "var(--color-border-strong)"}
+            strokeWidth="1.2"
+            strokeLinejoin="round"
+          />
+        </svg>
+      ))}
+    </span>
+  )
+}
 
 export function ReviewsSection() {
-  const { data: reviews, error, isLoading } = useSWR<Review[]>("/api/reviews", fetcher, {
-    refreshInterval: 30000,
-  })
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [isFormOpen, setIsFormOpen] = useState(false)
-  const [isPaused, setIsPaused] = useState(false)
-  const [direction, setDirection] = useState(1)
-  const progressRef = useRef<HTMLDivElement>(null)
-  const progress = useMotionValue(0)
-  const progressWidth = useTransform(progress, [0, 100], ["0%", "100%"])
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [remaining, setRemaining] = useState(2)
+  const [loading, setLoading] = useState(true)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editing, setEditing] = useState<Review | null>(null)
 
-  // Auto-rotate reviews with progress bar
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch("/api/reviews")
+      if (!res.ok) return
+      const data: ReviewsResponse = await res.json()
+      setReviews(data.reviews ?? [])
+      setRemaining(data.remaining ?? 0)
+    } catch {
+      /* noop */
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
-    if (!reviews || reviews.length <= 1 || isPaused) {
-      progress.set(0)
-      return
-    }
-    
-    // Animate progress bar
-    const controls = animate(progress, 100, {
-      duration: 6,
-      ease: "linear",
-      onComplete: () => {
-        setDirection(1)
-        setCurrentIndex((prev) => (prev + 1) % reviews.length)
-        progress.set(0)
-      }
-    })
+    load()
+  }, [load])
 
-    return () => controls.stop()
-  }, [reviews, currentIndex, isPaused, progress])
-
-  const goToReview = useCallback((index: number) => {
-    if (index > currentIndex) {
-      setDirection(1)
-    } else {
-      setDirection(-1)
-    }
-    setCurrentIndex(index)
-    progress.set(0)
-  }, [currentIndex, progress])
-
-  const goToPrevious = useCallback(() => {
-    if (!reviews) return
-    setDirection(-1)
-    setCurrentIndex((prev) => (prev - 1 + reviews.length) % reviews.length)
-    progress.set(0)
-  }, [reviews, progress])
-
-  const goToNext = useCallback(() => {
-    if (!reviews) return
-    setDirection(1)
-    setCurrentIndex((prev) => (prev + 1) % reviews.length)
-    progress.set(0)
-  }, [reviews, progress])
-
-  const slideVariants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? 300 : -300,
-      opacity: 0,
-      scale: 0.9,
-      rotateY: direction > 0 ? 15 : -15,
-    }),
-    center: {
-      x: 0,
-      opacity: 1,
-      scale: 1,
-      rotateY: 0,
-    },
-    exit: (direction: number) => ({
-      x: direction > 0 ? -300 : 300,
-      opacity: 0,
-      scale: 0.9,
-      rotateY: direction > 0 ? -15 : 15,
-    }),
+  const openNew = () => {
+    setEditing(null)
+    setModalOpen(true)
+  }
+  const openEdit = (r: Review) => {
+    setEditing(r)
+    setModalOpen(true)
   }
 
+  const marquee = reviews.length >= 3 ? [...reviews, ...reviews] : reviews
+
   return (
-    <section className="py-20 px-4 relative overflow-hidden">
-      {/* Background effect */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-neon-purple/5 to-transparent" />
-      
-      <div className="max-w-4xl mx-auto relative z-10">
-        {/* Section header */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          whileInView={{ y: 0, opacity: 1 }}
-          viewport={{ once: true }}
-          className="text-center mb-12"
-        >
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-foreground via-neon-purple to-foreground bg-clip-text text-transparent">
-            Reviews
+    <section id="reviews" className="relative mx-auto max-w-5xl px-6 py-20 md:py-28">
+      <div className="mb-12 flex flex-col gap-2">
+        <span className="font-mono text-xs uppercase tracking-[0.25em] text-muted-foreground">
+          02 — Testimonials
+        </span>
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <h2 className="font-serif text-4xl tracking-tight text-foreground md:text-5xl">
+            Kind words
           </h2>
-          <p className="text-muted-foreground max-w-lg mx-auto">
-            What people say about working with me
-          </p>
-        </motion.div>
-
-        {/* Reviews carousel */}
-        <div 
-          className="relative"
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
-        >
-          {isLoading ? (
-            <div className="cyber-card rounded-xl p-8 text-center">
-              <div className="animate-pulse space-y-4">
-                <div className="h-4 bg-secondary rounded w-3/4 mx-auto" />
-                <div className="h-4 bg-secondary rounded w-1/2 mx-auto" />
-                <div className="h-4 bg-secondary rounded w-2/3 mx-auto" />
-              </div>
-            </div>
-          ) : error ? (
-            <div className="cyber-card rounded-xl p-8 text-center text-destructive">
-              Failed to load reviews. Please try again later.
-            </div>
-          ) : reviews && reviews.length > 0 ? (
-            <>
-              {/* Navigation arrows */}
-              <motion.button
-                onClick={goToPrevious}
-                whileHover={{ scale: 1.1, x: -2 }}
-                whileTap={{ scale: 0.95 }}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-12 z-10 p-3 rounded-full bg-secondary/50 border border-border hover:border-neon-purple hover:bg-neon-purple/20 hover:shadow-lg hover:shadow-neon-purple/25 transition-all duration-300"
-                aria-label="Previous review"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </motion.button>
-              
-              <motion.button
-                onClick={goToNext}
-                whileHover={{ scale: 1.1, x: 2 }}
-                whileTap={{ scale: 0.95 }}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-12 z-10 p-3 rounded-full bg-secondary/50 border border-border hover:border-neon-purple hover:bg-neon-purple/20 hover:shadow-lg hover:shadow-neon-purple/25 transition-all duration-300"
-                aria-label="Next review"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </motion.button>
-
-              {/* Review card with 3D effect */}
-              <div className="overflow-hidden perspective-1000">
-                <AnimatePresence mode="wait" custom={direction}>
-                  <motion.div
-                    key={reviews[currentIndex].id}
-                    custom={direction}
-                    variants={slideVariants}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    transition={{ 
-                      type: "spring",
-                      stiffness: 300,
-                      damping: 30,
-                      opacity: { duration: 0.2 }
-                    }}
-                    className="cyber-card rounded-xl p-8 relative overflow-hidden"
-                  >
-                    {/* Animated glow effect */}
-                    <motion.div 
-                      className="absolute inset-0 bg-gradient-to-r from-neon-purple/0 via-neon-purple/10 to-neon-purple/0"
-                      animate={{
-                        x: ["-100%", "100%"],
-                      }}
-                      transition={{
-                        duration: 3,
-                        repeat: Infinity,
-                        repeatDelay: 2,
-                        ease: "easeInOut"
-                      }}
-                    />
-
-                    {/* Stars with stagger animation */}
-                    <div className="flex justify-center gap-1 mb-6 relative z-10">
-                      {[1, 2, 3, 4, 5].map((star, i) => (
-                        <motion.svg
-                          key={star}
-                          initial={{ scale: 0, rotate: -180 }}
-                          animate={{ scale: 1, rotate: 0 }}
-                          transition={{ 
-                            delay: i * 0.1,
-                            type: "spring",
-                            stiffness: 500,
-                            damping: 15
-                          }}
-                          className={`w-6 h-6 ${
-                            star <= reviews[currentIndex].rating
-                              ? "text-acid-green drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]"
-                              : "text-muted"
-                          }`}
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                        </motion.svg>
-                      ))}
-                    </div>
-
-                    {/* Review text with typing effect */}
-                    <motion.blockquote 
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3 }}
-                      className="text-lg md:text-xl text-center text-foreground mb-6 italic relative z-10"
-                    >
-                      &quot;{reviews[currentIndex].review_text}&quot;
-                    </motion.blockquote>
-
-                    {/* Author */}
-                    <motion.div 
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4 }}
-                      className="text-center relative z-10"
-                    >
-                      <p className="font-semibold text-neon-purple">
-                        {reviews[currentIndex].user_name}
-                      </p>
-                      <p className="text-sm text-muted-foreground font-mono">
-                        {new Date(reviews[currentIndex].created_at).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}
-                      </p>
-                    </motion.div>
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-
-              {/* Progress bar and dots navigation */}
-              <div className="mt-6 space-y-4">
-                {/* Auto-scroll progress bar */}
-                <div className="h-1 bg-secondary rounded-full overflow-hidden mx-auto max-w-xs">
-                  <motion.div
-                    ref={progressRef}
-                    className="h-full bg-gradient-to-r from-neon-purple to-acid-green rounded-full"
-                    style={{ width: progressWidth }}
-                  />
-                </div>
-
-                {/* Dots navigation */}
-                <div className="flex justify-center gap-2">
-                  {reviews.map((_, index) => (
-                    <motion.button
-                      key={index}
-                      onClick={() => goToReview(index)}
-                      whileHover={{ scale: 1.2 }}
-                      whileTap={{ scale: 0.9 }}
-                      className={`h-2 rounded-full transition-all duration-500 ${
-                        index === currentIndex
-                          ? "bg-gradient-to-r from-neon-purple to-acid-green w-8 shadow-lg shadow-neon-purple/30"
-                          : "bg-muted hover:bg-muted-foreground w-2"
-                      }`}
-                      aria-label={`Go to review ${index + 1}`}
-                    />
-                  ))}
-                </div>
-
-                {/* Pause indicator */}
-                <AnimatePresence>
-                  {isPaused && reviews.length > 1 && (
-                    <motion.p
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -5 }}
-                      className="text-center text-xs text-muted-foreground"
-                    >
-                      Paused - hover to keep viewing
-                    </motion.p>
-                  )}
-                </AnimatePresence>
-              </div>
-            </>
-          ) : (
-            <div className="cyber-card rounded-xl p-8 text-center text-muted-foreground">
-              No reviews yet. Be the first to leave one!
-            </div>
-          )}
-        </div>
-
-        {/* Add review button */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          whileInView={{ y: 0, opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.2 }}
-          className="text-center mt-8"
-        >
-          <motion.button
-            onClick={() => setIsFormOpen(true)}
-            whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(124, 58, 237, 0.5)" }}
-            whileTap={{ scale: 0.95 }}
-            className="px-6 py-3 rounded-lg bg-neon-purple text-primary-foreground font-medium transition-all duration-300 shadow-lg shadow-neon-purple/25"
+          <button
+            onClick={openNew}
+            className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm text-foreground transition-colors hover:border-border-strong hover:bg-card"
           >
-            Leave a Review
-          </motion.button>
-        </motion.div>
+            Leave a review
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M7 3V11M3 7H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
       </div>
 
-      {/* Review form modal */}
+      {loading ? (
+        <div className="flex gap-5">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="h-40 flex-1 animate-pulse rounded-2xl border border-border bg-card/40"
+            />
+          ))}
+        </div>
+      ) : reviews.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border py-16 text-center">
+          <p className="text-muted-foreground">No reviews yet — be the first.</p>
+        </div>
+      ) : reviews.length >= 3 ? (
+        <div className="group/marquee relative overflow-hidden">
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-background to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-background to-transparent" />
+          <div className="flex w-max gap-5 animate-marquee group-hover/marquee:[animation-play-state:paused]">
+            {marquee.map((r, i) => (
+              <ReviewCard key={`${r.id}-${i}`} review={r} onEdit={openEdit} />
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          {reviews.map((r) => (
+            <ReviewCard key={r.id} review={r} onEdit={openEdit} fixedWidth={false} />
+          ))}
+        </div>
+      )}
+
       <AnimatePresence>
-        {isFormOpen && (
-          <ReviewFormModal
-            onClose={() => setIsFormOpen(false)}
-            onSuccess={() => {
-              setIsFormOpen(false)
-              mutate("/api/reviews")
+        {modalOpen && (
+          <ReviewModal
+            key="modal"
+            editing={editing}
+            remaining={remaining}
+            onClose={() => setModalOpen(false)}
+            onSaved={() => {
+              setModalOpen(false)
+              load()
             }}
           />
         )}
@@ -334,43 +143,106 @@ export function ReviewsSection() {
   )
 }
 
-function ReviewFormModal({
-  onClose,
-  onSuccess,
+function ReviewCard({
+  review,
+  onEdit,
+  fixedWidth = true,
 }: {
-  onClose: () => void
-  onSuccess: () => void
+  review: Review
+  onEdit: (r: Review) => void
+  fixedWidth?: boolean
 }) {
-  const [formData, setFormData] = useState({
-    user_name: "",
-    review_text: "",
-    rating: 5,
-  })
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState("")
+  return (
+    <div
+      className={`relative flex flex-col rounded-2xl border border-border bg-card/60 p-6 backdrop-blur-sm transition-colors hover:border-border-strong ${
+        fixedWidth ? "w-[340px] shrink-0" : ""
+      }`}
+    >
+      <div className="mb-4 flex items-center justify-between">
+        <Stars rating={review.rating} />
+        {review.owned && (
+          <button
+            onClick={() => onEdit(review)}
+            className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground transition-colors hover:text-accent"
+          >
+            <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
+              <path d="M9.5 2.5l2 2L5 11l-2.5.5L3 9l6.5-6.5z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+            </svg>
+            Edit
+          </button>
+        )}
+      </div>
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-    setError("")
+      <p className="flex-1 text-pretty leading-relaxed text-foreground/90">
+        &ldquo;{review.review_text}&rdquo;
+      </p>
 
+      <div className="mt-5 flex items-center gap-3 border-t border-border/60 pt-4">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary font-serif text-sm text-foreground">
+          {review.user_name.charAt(0).toUpperCase()}
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium text-foreground">{review.user_name}</p>
+          {review.role && (
+            <p className="truncate font-mono text-[11px] text-muted-foreground">{review.role}</p>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ReviewModal({
+  editing,
+  remaining,
+  onClose,
+  onSaved,
+}: {
+  editing: Review | null
+  remaining: number
+  onClose: () => void
+  onSaved: () => void
+}) {
+  const [name, setName] = useState(editing?.user_name ?? "")
+  const [role, setRole] = useState(editing?.role ?? "")
+  const [text, setText] = useState(editing?.review_text ?? "")
+  const [rating, setRating] = useState(editing?.rating ?? 5)
+  const [hover, setHover] = useState(0)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const atLimit = !editing && remaining <= 0
+
+  const submit = async () => {
+    if (atLimit) return
+    if (!name.trim() || !text.trim()) {
+      setError("Please fill in your name and review.")
+      return
+    }
+    setSubmitting(true)
+    setError(null)
     try {
       const res = await fetch("/api/reviews", {
-        method: "POST",
+        method: editing ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          id: editing?.id,
+          user_name: name.trim(),
+          role: role.trim() || null,
+          review_text: text.trim(),
+          rating,
+        }),
       })
-
+      const data = await res.json()
       if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || "Failed to submit review")
+        setError(data?.error ?? "Something went wrong.")
+        setSubmitting(false)
+        return
       }
-
-      onSuccess()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred")
-    } finally {
-      setIsSubmitting(false)
+      onSaved()
+    } catch {
+      setError("Network error. Try again.")
+      setSubmitting(false)
     }
   }
 
@@ -379,129 +251,131 @@ function ReviewFormModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
       onClick={onClose}
     >
+      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
       <motion.div
-        initial={{ scale: 0.9, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.9, opacity: 0, y: 20 }}
-        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+        initial={{ opacity: 0, scale: 0.96, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 12 }}
+        transition={{ type: "spring", bounce: 0.25, duration: 0.5 }}
         onClick={(e) => e.stopPropagation()}
-        className="cyber-card rounded-xl p-6 md:p-8 w-full max-w-md"
+        className="relative w-full max-w-md overflow-hidden rounded-2xl border border-border-strong bg-card p-7"
       >
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-foreground">Leave a Review</h3>
-          <motion.button
-            onClick={onClose}
-            whileHover={{ scale: 1.1, rotate: 90 }}
-            whileTap={{ scale: 0.9 }}
-            className="p-2 rounded-lg hover:bg-secondary transition-colors"
-            aria-label="Close"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </motion.button>
-        </div>
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent to-transparent" />
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="mb-6 flex items-start justify-between">
           <div>
-            <label htmlFor="user_name" className="block text-sm font-medium text-foreground mb-1.5">
-              Your Name
-            </label>
-            <input
-              type="text"
-              id="user_name"
-              required
-              maxLength={50}
-              value={formData.user_name}
-              onChange={(e) => setFormData({ ...formData, user_name: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-lg bg-secondary border border-border focus:border-neon-purple focus:ring-1 focus:ring-neon-purple outline-none transition-all text-foreground"
-              placeholder="John Doe"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="rating" className="block text-sm font-medium text-foreground mb-1.5">
-              Rating
-            </label>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <motion.button
-                  key={star}
-                  type="button"
-                  onClick={() => setFormData({ ...formData, rating: star })}
-                  whileHover={{ scale: 1.2 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="p-1"
-                >
-                  <svg
-                    className={`w-8 h-8 ${
-                      star <= formData.rating 
-                        ? "text-acid-green drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]" 
-                        : "text-muted"
-                    } transition-colors`}
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                  </svg>
-                </motion.button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="review_text" className="block text-sm font-medium text-foreground mb-1.5">
-              Your Review
-            </label>
-            <textarea
-              id="review_text"
-              required
-              maxLength={500}
-              rows={4}
-              value={formData.review_text}
-              onChange={(e) => setFormData({ ...formData, review_text: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-lg bg-secondary border border-border focus:border-neon-purple focus:ring-1 focus:ring-neon-purple outline-none transition-all resize-none text-foreground"
-              placeholder="Share your experience..."
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              {formData.review_text.length}/500 characters
+            <h3 className="font-serif text-2xl text-foreground">
+              {editing ? "Edit your review" : "Leave a review"}
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {editing
+                ? "Update what you shared earlier."
+                : `${remaining} review${remaining === 1 ? "" : "s"} remaining for you.`}
             </p>
           </div>
-
-          {error && (
-            <motion.p 
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="text-sm text-destructive"
-            >
-              {error}
-            </motion.p>
-          )}
-
-          <motion.button
-            type="submit"
-            disabled={isSubmitting}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="w-full px-6 py-3 rounded-lg bg-neon-purple text-primary-foreground font-medium hover:bg-neon-purple/80 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-neon-purple/25"
+          <button
+            onClick={onClose}
+            className="text-muted-foreground transition-colors hover:text-foreground"
+            aria-label="Close"
           >
-            {isSubmitting ? (
-              <span className="flex items-center justify-center gap-2">
-                <motion.span
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+
+        {atLimit ? (
+          <p className="rounded-lg border border-border bg-secondary/40 px-4 py-6 text-center text-sm text-muted-foreground">
+            You&apos;ve reached the maximum of 2 reviews. You can edit your existing
+            ones instead.
+          </p>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <label className="mb-2 block font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                Rating
+              </label>
+              <div className="flex gap-1" onMouseLeave={() => setHover(0)}>
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onMouseEnter={() => setHover(n)}
+                    onClick={() => setRating(n)}
+                    className="transition-transform hover:scale-110"
+                  >
+                    <svg width="26" height="26" viewBox="0 0 20 20" fill="none">
+                      <path
+                        d="M10 1.5l2.47 5.01 5.53.8-4 3.9.94 5.51L10 14.13l-4.95 2.6.94-5.5-4-3.9 5.53-.81L10 1.5z"
+                        fill={n <= (hover || rating) ? "var(--color-accent)" : "none"}
+                        stroke={n <= (hover || rating) ? "var(--color-accent)" : "var(--color-border-strong)"}
+                        strokeWidth="1.2"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-2 block font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                  Name
+                </label>
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  maxLength={40}
+                  placeholder="Your name"
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-accent"
                 />
-                Submitting...
-              </span>
-            ) : (
-              "Submit Review"
-            )}
-          </motion.button>
-        </form>
+              </div>
+              <div>
+                <label className="mb-2 block font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                  Role <span className="normal-case opacity-60">(optional)</span>
+                </label>
+                <input
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  maxLength={40}
+                  placeholder="e.g. Server owner"
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-accent"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-2 block font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                Review
+              </label>
+              <textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                maxLength={280}
+                rows={4}
+                placeholder="Share your experience…"
+                className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-accent"
+              />
+              <p className="mt-1 text-right font-mono text-[10px] text-muted-foreground/60">
+                {text.length}/280
+              </p>
+            </div>
+
+            {error && <p className="text-sm text-rose-400">{error}</p>}
+
+            <button
+              onClick={submit}
+              disabled={submitting}
+              className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-accent-foreground transition-transform hover:-translate-y-0.5 disabled:opacity-60"
+            >
+              {submitting ? "Saving…" : editing ? "Save changes" : "Submit review"}
+            </button>
+          </div>
+        )}
       </motion.div>
     </motion.div>
   )

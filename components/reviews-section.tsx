@@ -85,7 +85,7 @@ export function ReviewsSection() {
     <section id="reviews" className="relative mx-auto max-w-5xl px-6 py-20 md:py-28">
       <div className="mb-12 flex flex-col gap-2">
         <span className="font-mono text-xs uppercase tracking-[0.25em] text-accent">
-          02 — Testimonials
+          05 — Testimonials
         </span>
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="flex items-center gap-3">

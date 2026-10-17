@@ -33,7 +33,7 @@ export function WorkSection({ groups }: { groups: WorkGroup[] }) {
         <p className="section-note">A practical index of bots, systems, server work, and experiments built with intent.</p>
       </div>
 
-      <div className="index-header"><p className="eyebrow"><span>03</span> selected work</p><span>click a row to expand</span></div>
+      <div className="index-header"><p className="eyebrow"><span>04</span> selected work</p><span>click a row to expand</span></div>
       <div className="work-tabs"><button className={active === "all" ? "active" : ""} onClick={() => setActive("all")}>All <small>{all.length}</small></button>{groups.map((group) => <button key={group.category} className={active === group.category ? "active" : ""} onClick={() => setActive(group.category)}>{group.label} <small>{group.projects.length}</small></button>)}</div>
       {activeGroup && <p className="active-blurb">{activeGroup.blurb}</p>}
       <AnimatePresence mode="wait"><motion.div key={active} className="project-list" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: .25 }}>{visible.map((project, index) => <ProjectRow key={project.id} project={project} index={index} />)}</motion.div></AnimatePresence>

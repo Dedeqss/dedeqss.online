@@ -33,7 +33,7 @@ export function Hero({ discordUserId, discordUsername, gunsUrl }: HeroProps) {
   }
 
   return (
-    <section className="relative mx-auto max-w-5xl px-6 pt-24 pb-16 md:pt-36 md:pb-24">
+    <section className="relative mx-auto max-w-5xl px-5 pt-16 pb-16 md:px-6 md:pt-24 md:pb-24">
       <div className="grid grid-cols-1 gap-12 md:grid-cols-[1.4fr_1fr] md:items-center">
         {/* Left: intro */}
         <div>

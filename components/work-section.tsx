@@ -3,8 +3,21 @@
 import { useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 
-export interface Project { id: string; name: string; description: string; meta?: string; tags: string[]; link?: string }
-export interface WorkGroup { category: string; label: string; blurb: string; projects: Project[] }
+export interface Project {
+  id: string
+  name: string
+  description: string
+  meta?: string
+  tags: string[]
+  link?: string
+}
+
+export interface WorkGroup {
+  category: string
+  label: string
+  blurb: string
+  projects: Project[]
+}
 
 export function WorkSection({ groups, featuredUrl }: { groups: WorkGroup[]; featuredUrl: string }) {
   const [active, setActive] = useState("all")
@@ -12,18 +25,25 @@ export function WorkSection({ groups, featuredUrl }: { groups: WorkGroup[]; feat
   const visible = active === "all" ? all : all.filter((project) => project.category === groups.find((group) => group.category === active)?.label)
   const activeGroup = groups.find((group) => group.category === active)
 
-  return <section id="work" className="work-wrap">
-    <div className="section-heading"><div><p className="eyebrow"><span>02</span> selected work</p><h2>Made to<br /><em>hold up.</em></h2></div><p className="section-note">A practical index of the bots, systems, server work, and experiments I keep coming back to.</p></div>
-    <a className="glaze-feature" href={featuredUrl} target="_blank" rel="noreferrer">
-      <div className="glaze-art"><img src="/glaze.jpg" alt="Glaze project artwork, a grayscale kitten" /><span className="glaze-art-label">GLZ / 001</span></div>
-      <div className="glaze-copy"><p className="eyebrow"><span>FEATURED</span> flagship build</p><h3>Glaze</h3><p>One place for the tools a Discord community actually needs. Built as a long-term product, not a weekend bot.</p><span className="glaze-open">open glaze.dedeqss.online <b>↗</b></span></div>
-      <div className="glaze-side"><span>01</span><br />live build<br /><b>↗</b></div>
-    </a>
-    <div className="index-header"><p className="eyebrow"><span>03</span> everything else</p><span>click a row to expand</span></div>
-    <div className="work-tabs"><button className={active === "all" ? "active" : ""} onClick={() => setActive("all")}>All <small>{all.length}</small></button>{groups.map((group) => <button key={group.category} className={active === group.category ? "active" : ""} onClick={() => setActive(group.category)}>{group.label} <small>{group.projects.length}</small></button>)}</div>
-    {activeGroup && <p className="active-blurb">{activeGroup.blurb}</p>}
-    <AnimatePresence mode="wait"><motion.div key={active} className="project-list" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: .25 }}>{visible.map((project, index) => <ProjectRow key={project.id} project={project} index={index} />)}</motion.div></AnimatePresence>
-  </section>
+  return (
+    <section id="work" className="work-wrap">
+      <div className="section-heading">
+        <div><p className="eyebrow"><span>02</span> selected work</p><h2>Made to<br /><em>hold up.</em></h2></div>
+        <p className="section-note">A practical index of bots, systems, server work, and experiments built with intent.</p>
+      </div>
+
+      <motion.a className="glaze-feature" href={featuredUrl} target="_blank" rel="noreferrer" whileHover={{ y: -6 }} transition={{ duration: .25 }}>
+        <div className="glaze-art"><img src="/glaze.jpg" alt="Glaze project artwork, a grayscale kitten" /><span className="glaze-art-label">GLZ / 001</span></div>
+        <div className="glaze-copy"><p className="eyebrow"><span>FEATURED</span> flagship build</p><h3>Glaze</h3><p>One place for the tools a Discord community actually needs. A long-term product with a live home at glaze.dedeqss.online.</p><span className="glaze-open">visit live build <b>↗</b></span></div>
+        <div className="glaze-side"><span>01</span><br />live build<br /><b>↗</b></div>
+      </motion.a>
+
+      <div className="index-header"><p className="eyebrow"><span>03</span> everything else</p><span>click a row to expand</span></div>
+      <div className="work-tabs"><button className={active === "all" ? "active" : ""} onClick={() => setActive("all")}>All <small>{all.length}</small></button>{groups.map((group) => <button key={group.category} className={active === group.category ? "active" : ""} onClick={() => setActive(group.category)}>{group.label} <small>{group.projects.length}</small></button>)}</div>
+      {activeGroup && <p className="active-blurb">{activeGroup.blurb}</p>}
+      <AnimatePresence mode="wait"><motion.div key={active} className="project-list" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: .25 }}>{visible.map((project, index) => <ProjectRow key={project.id} project={project} index={index} />)}</motion.div></AnimatePresence>
+    </section>
+  )
 }
 
 function ProjectRow({ project, index }: { project: Project & { category?: string }; index: number }) {

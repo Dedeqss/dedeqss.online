@@ -4,7 +4,7 @@ import { ReviewsSection } from "@/components/reviews-section"
 import { Footer } from "@/components/footer"
 
 const config = {
-  name: "Dede",
+  name: "dede",
   discordUserId: "1463214892449530022",
   gunsUrl: "https://guns.lol/dedeqss.22",
 }

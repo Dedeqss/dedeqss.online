@@ -19,20 +19,20 @@ const instrumentSerif = Instrument_Serif({
 })
 
 export const metadata: Metadata = {
-  title: 'Dede — Developer',
+  title: 'dedeqss.online',
   description:
-    'Full-stack developer working in Python, JavaScript, Java, and Lua. I build Discord bots, Minecraft servers, and Roblox systems.',
+    'full-stack dev working in python, javascript, java, and lua. I build discord bots, Minecraft servers, and Roblox systems.',
   keywords: ['developer', 'software', 'portfolio', 'discord bots', 'minecraft', 'roblox', 'python', 'javascript', 'lua'],
   authors: [{ name: 'Dede' }],
   openGraph: {
-    title: 'Dede — Developer',
-    description: 'I build Discord bots, Minecraft servers, and Roblox systems.',
+    title: 'dedeqss.online',
+    description: 'check out my portofolio',
     type: 'website',
   },
   twitter: {
     card: 'summary',
-    title: 'Dede — Developer',
-    description: 'I build Discord bots, Minecraft servers, and Roblox systems.',
+    title: 'dedeqss.online',
+    description: 'check out my portofolio',
   },
 }
 

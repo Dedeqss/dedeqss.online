@@ -10,6 +10,7 @@ export interface Project {
   meta?: string
   tags: string[]
   link?: string
+  featured?: boolean
 }
 
 export interface WorkGroup {
@@ -19,7 +20,7 @@ export interface WorkGroup {
   projects: Project[]
 }
 
-export function WorkSection({ groups, featuredUrl }: { groups: WorkGroup[]; featuredUrl: string }) {
+export function WorkSection({ groups }: { groups: WorkGroup[] }) {
   const [active, setActive] = useState("all")
   const all = groups.flatMap((group) => group.projects.map((project) => ({ ...project, category: group.label })))
   const visible = active === "all" ? all : all.filter((project) => project.category === groups.find((group) => group.category === active)?.label)
@@ -32,13 +33,7 @@ export function WorkSection({ groups, featuredUrl }: { groups: WorkGroup[]; feat
         <p className="section-note">A practical index of bots, systems, server work, and experiments built with intent.</p>
       </div>
 
-      <motion.a className="glaze-feature" href={featuredUrl} target="_blank" rel="noreferrer" whileHover={{ y: -6 }} transition={{ duration: .25 }}>
-        <div className="glaze-art"><img src="/glaze.jpg" alt="Glaze project artwork, a grayscale kitten" /><span className="glaze-art-label">GLZ / 001</span></div>
-        <div className="glaze-copy"><p className="eyebrow"><span>FEATURED</span> flagship build</p><h3>Glaze</h3><p>One place for the tools a Discord community actually needs. A long-term product with a live home at glaze.dedeqss.online.</p><span className="glaze-open">visit live build <b>↗</b></span></div>
-        <div className="glaze-side"><span>01</span><br />live build<br /><b>↗</b></div>
-      </motion.a>
-
-      <div className="index-header"><p className="eyebrow"><span>03</span> everything else</p><span>click a row to expand</span></div>
+      <div className="index-header"><p className="eyebrow"><span>03</span> selected work</p><span>click a row to expand</span></div>
       <div className="work-tabs"><button className={active === "all" ? "active" : ""} onClick={() => setActive("all")}>All <small>{all.length}</small></button>{groups.map((group) => <button key={group.category} className={active === group.category ? "active" : ""} onClick={() => setActive(group.category)}>{group.label} <small>{group.projects.length}</small></button>)}</div>
       {activeGroup && <p className="active-blurb">{activeGroup.blurb}</p>}
       <AnimatePresence mode="wait"><motion.div key={active} className="project-list" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: .25 }}>{visible.map((project, index) => <ProjectRow key={project.id} project={project} index={index} />)}</motion.div></AnimatePresence>
@@ -48,5 +43,5 @@ export function WorkSection({ groups, featuredUrl }: { groups: WorkGroup[]; feat
 
 function ProjectRow({ project, index }: { project: Project & { category?: string }; index: number }) {
   const [open, setOpen] = useState(false)
-  return <motion.article layout className={`project-row ${open ? "is-open" : ""}`} onClick={() => setOpen(!open)}><span className="project-index">{String(index + 1).padStart(2, "0")}</span><div className="project-main"><h3>{project.name}</h3><p className="project-meta">{project.meta}</p>{open && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="project-desc">{project.description}</motion.p>}<div className="project-tags">{project.tags.map((tag) => <span key={tag}>{tag}</span>)}</div></div><span className="project-category">{project.category}</span>{project.link ? <a className="project-link" href={project.link} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>↗</a> : <span className="project-link">{open ? "−" : "+"}</span>}</motion.article>
+  return <motion.article layout className={`project-row ${project.featured ? "is-featured" : ""} ${open ? "is-open" : ""}`} onClick={() => setOpen(!open)}><span className="project-index">{String(index + 1).padStart(2, "0")}</span><div className="project-main"><div className="project-title-line"><h3>{project.name}</h3>{project.featured && <span className="featured-badge">featured</span>}</div><p className="project-meta">{project.meta}</p>{open && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="project-desc">{project.description}</motion.p>}<div className="project-tags">{project.tags.map((tag) => <span key={tag}>{tag}</span>)}</div></div><span className="project-category">{project.category}</span>{project.link ? <a className="project-link" href={project.link} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>↗</a> : <span className="project-link">{open ? "−" : "+"}</span>}</motion.article>
 }

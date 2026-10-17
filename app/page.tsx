@@ -11,6 +11,7 @@ const config = {
 
 const work: WorkGroup[] = [
   { category: "bots", label: "Discord bots", blurb: "Bots, moderation systems, and community tooling built for real servers and private communities.", projects: [
+    { id: "glaze", name: "Glaze", meta: "Featured build · live at glaze.dedeqss.online", description: "An all-in-one Discord bot built as a long-term product for communities that need their tools in one place.", tags: ["JavaScript", "Discord", "Live"], link: "https://glaze.dedeqss.online", featured: true },
     { id: "pawmade", name: "Pawmade Bot", meta: "Private · discord.gg/pawmade", description: "A private JavaScript bot built around the Pawmade community's custom systems and day-to-day tooling.", tags: ["JavaScript", "Discord", "Private"], link: "https://discord.gg/pawmade" },
     { id: "purgew", name: "Purgew Bot", meta: "Private · discord.gg/purgew", description: "A private JavaScript bot made for Purgew, with tailored automation and community features.", tags: ["JavaScript", "Automation", "Private"], link: "https://discord.gg/purgew" },
     { id: "barbiepjfs", name: "Barbiepjfs Bot", meta: "Private · discord.gg/barbiepjfs", description: "A JavaScript mass-DM bot made for the Barbiepjfs community and its messaging workflows.", tags: ["JavaScript", "Mass-DM", "Private"], link: "https://discord.gg/barbiepjfs" },
@@ -38,5 +39,5 @@ const work: WorkGroup[] = [
 ]
 
 export default function Page() {
-  return <main className="site-shell"><div className="site-noise" /><Hero discordUserId={config.discordUserId} gunsUrl={config.gunsUrl} /><WorkSection groups={work} featuredUrl="https://glaze.dedeqss.online" /><ReviewsSection /><Footer name={config.name} gunsLolUrl={config.gunsUrl} /></main>
+  return <main className="site-shell"><div className="site-noise" /><Hero discordUserId={config.discordUserId} gunsUrl={config.gunsUrl} /><WorkSection groups={work} /><ReviewsSection /><Footer name={config.name} gunsLolUrl={config.gunsUrl} /></main>
 }

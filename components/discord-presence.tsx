@@ -106,9 +106,9 @@ export function DiscordPresence({ userId }: { userId: string }) {
                 ? isLoading
                   ? "Fetching presence…"
                   : status === "offline"
-                    ? "Currently offline"
+                    ? "Offline · join discord.gg/lanyard"
                     : "No status set"
-                : "Live presence — add your ID"}
+                : "Live presence — join discord.gg/lanyard"}
             </p>
           )}
         </div>

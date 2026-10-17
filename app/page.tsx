@@ -3,163 +3,41 @@ import { WorkSection, type WorkGroup } from "@/components/work-section"
 import { ReviewsSection } from "@/components/reviews-section"
 import { Footer } from "@/components/footer"
 
-// ─────────────────────────────────────────────────────────────
-// CONFIG — update these with your details
-// ─────────────────────────────────────────────────────────────
-const CONFIG = {
+const config = {
   name: "Dede",
-  // Live Discord status via Lanyard. You MUST join discord.gg/lanyard so the
-  // API can track your presence, otherwise it falls back gracefully.
-  discordUserId: "825846052463968266",
-  discordUsername: "@04d4",
+  discordUserId: "1463214892449530022",
   gunsUrl: "https://guns.lol/dedeqss.22",
 }
 
-const WORK: WorkGroup[] = [
-  {
-    category: "discord",
-    label: "Discord",
-    blurb:
-      "Custom bots built for real communities — from high-traffic economy systems to anti-nuke protection handling thousands of events a day.",
-    projects: [
-      {
-        id: "barbiepjfs",
-        name: "Barbiepjfs Bot",
-        meta: "Mass-DM bot",
-        description:
-          "A mass-DM bot built for discord.gg/barbiepjfs — handles bulk outreach and messaging automation reliably at scale.",
-        tags: ["Python", "Mass-DM", "Automation"],
-        link: "https://discord.gg/barbiepjfs",
-      },
-      {
-        id: "pawmade",
-        name: "Pawmade Bot",
-        meta: "Private bot",
-        description:
-          "A private bot made for discord.gg/pawmade — built to the community's exact needs with custom systems and tooling.",
-        tags: ["Python", "discord.py", "Private"],
-        link: "https://discord.gg/pawmade",
-      },
-      {
-        id: "purgew",
-        name: "Purgew Bot",
-        meta: "Private bot",
-        description:
-          "A private bot made for discord.gg/purgew — tailored features and automation for the server.",
-        tags: ["Python", "discord.py", "Private"],
-        link: "https://discord.gg/purgew",
-      },
-      {
-        id: "zuki-casino",
-        name: "Zuki Casino",
-        meta: "100k+ weekly messages",
-        description:
-          "High-traffic Python casino bot scaled to 100k+ weekly messages with advanced gambling mechanics, an economy, and leaderboards.",
-        tags: ["Python", "Economy", "Scaling"],
-      },
-      {
-        id: "closet-batman",
-        name: "Closet Bot & Batman",
-        meta: "Anti-nuke",
-        description:
-          "Advanced moderation and anti-nuke protection bots with real-time threat detection, auto-response, and audit logging.",
-        tags: ["Moderation", "Security", "Real-time"],
-      },
-      {
-        id: "discord-tools",
-        name: "Discord Tools",
-        description:
-          "Custom 4L name snipers / checkers and voice-channel automation managers built for power users.",
-        tags: ["Automation", "Tooling"],
-      },
-      {
-        id: "private-bots",
-        name: "Custom Private Bots",
-        description:
-          "Multiple private bots built for specific communities, including economy and utility systems tailored to each server.",
-        tags: ["Custom", "Economy", "Utility"],
-      },
-    ],
-  },
-  {
-    category: "minecraft",
-    label: "Minecraft",
-    blurb:
-      "Server configuration and optimization — custom setups, UI systems, and performance tuning for live, high-concurrency servers.",
-    projects: [
-      {
-        id: "zuki-smp",
-        name: "Zuki SMP",
-        meta: "42+ concurrent players",
-        description:
-          "Main developer and configurator. Built custom configurations, UI systems, and optimized server performance for 42+ concurrent players.",
-        tags: ["Server config", "Optimization", "UI systems"],
-      },
-      {
-        id: "server-arch",
-        name: "Server Architecture",
-        description:
-          "Proficient in advanced plugin modification and full server setups — from the ground up to production-ready.",
-        tags: ["Plugins", "Setup", "Java"],
-      },
-      {
-        id: "lethium",
-        name: "Lethium Network",
-        meta: "play.lethium.net",
-        description:
-          "Media Manager at play.lethium.net — creating TikToks, Reels, and social media posts to grow the network.",
-        tags: ["Media", "Social", "Content"],
-        link: "https://play.lethium.net",
-      },
-    ],
-  },
-  {
-    category: "roblox",
-    label: "Roblox",
-    blurb:
-      "Lua frameworks and scripting — complex, private systems built for games and custom projects.",
-    projects: [
-      {
-        id: "dudas-ue",
-        name: "Dudasgoodpuppy UE Lua",
-        meta: "In development",
-        description:
-          "A complex, private stand-based item framework built for Roblox Unnamed Enhancements. Currently in active development.",
-        tags: ["Lua", "Framework", "Roblox"],
-      },
-      {
-        id: "custom-lua",
-        name: "Custom Lua Scripts",
-        description:
-          "Various Lua projects including game exploits and custom frameworks for different Roblox projects.",
-        tags: ["Lua", "Scripting", "Custom"],
-      },
-      {
-        id: "commissions",
-        name: "Other Projects",
-        description:
-          "Various private commissions for clients across different platforms and requirements.",
-        tags: ["Commissions", "Private"],
-      },
-    ],
-  },
+const work: WorkGroup[] = [
+  { category: "bots", label: "Discord bots", blurb: "Bots, moderation systems, and community tooling built for real servers and private communities.", projects: [
+    { id: "glaze", name: "Glaze", meta: "Featured build · live at glaze.dedeqss.online", description: "An all-in-one Discord bot built as a long-term product for communities that need their tools in one place.", tags: ["JavaScript", "Discord", "Live"], link: "https://glaze.dedeqss.online", featured: true },
+    { id: "pawmade", name: "Pawmade Bot", meta: "Private · discord.gg/pawmade", description: "A private JavaScript bot built around the Pawmade community's custom systems and day-to-day tooling.", tags: ["JavaScript", "Discord", "Private"], link: "https://discord.gg/pawmade" },
+    { id: "purgew", name: "Purgew Bot", meta: "Private · discord.gg/purgew", description: "A private JavaScript bot made for Purgew, with tailored automation and community features.", tags: ["JavaScript", "Automation", "Private"], link: "https://discord.gg/purgew" },
+    { id: "barbiepjfs", name: "Barbiepjfs Bot", meta: "Private · discord.gg/barbiepjfs", description: "A JavaScript mass-DM bot made for the Barbiepjfs community and its messaging workflows.", tags: ["JavaScript", "Mass-DM", "Private"], link: "https://discord.gg/barbiepjfs" },
+    { id: "alt-manager", name: "Discord Alt Manager", meta: "Private", description: "A private bot for managing owned test accounts and controlled server, voice, and messaging workflows.", tags: ["JavaScript", "Discord", "Private"] },
+    { id: "zuki-casino", name: "Zuki Casino", meta: "100k+ weekly messages", description: "A high-traffic casino bot with gambling mechanics, economy systems, and leaderboards.", tags: ["Python", "Scaling", "Economy"] },
+    { id: "closet-batman", name: "Closet Bot & Batman", meta: "Moderation", description: "Moderation and anti-nuke systems with real-time threat detection and audit logging.", tags: ["Security", "Moderation", "Real-time"] },
+  ] },
+  { category: "minecraft", label: "Minecraft", blurb: "Server configuration, plugin work, and performance tuning for communities that need a solid foundation.", projects: [
+    { id: "zuki-smp", name: "Zuki SMP", meta: "Main developer & configurator", description: "Custom configurations, UI systems, plugin work, and performance tuning for 42+ concurrent players.", tags: ["Java", "Configuration", "Performance"] },
+    { id: "server-architecture", name: "Server Architecture", meta: "Plugin modification", description: "Advanced plugin modification and complete server setups shaped around how a community actually plays.", tags: ["Java", "Plugins", "Systems"] },
+    { id: "lethium", name: "Lethium Network", meta: "Media manager · play.lethium.net", description: "Media management for TikToks, Reels, and social content supporting the network.", tags: ["Media", "Content", "Community"] },
+  ] },
+  { category: "roblox", label: "Roblox / Lua", blurb: "Private Lua frameworks and client-side experiments, documented here as work in progress rather than finished products.", projects: [
+    { id: "dudasgoodpuppy", name: "Dudasgoodpuppy UE LUA", meta: "Private · active development", description: "A complex private stand-based item framework for Roblox Unnamed Enhancements, currently in active development.", tags: ["Lua", "Framework", "WIP"] },
+    { id: "custom-lua", name: "Custom Lua Scripts", meta: "Private projects", description: "A range of Lua projects and custom frameworks made for different Roblox projects and commissions.", tags: ["Lua", "Scripting", "Private"] },
+    { id: "other-projects", name: "Other Projects", meta: "Private commissions", description: "Various private commissions for clients across different platforms, tools, and technical ideas.", tags: ["Mixed", "Commissions", "Private"] },
+  ] },
+  { category: "research", label: "Research", blurb: "Private local research projects, shared for context only and not intended to affect other players or public services.", projects: [
+    { id: "dahood-script", name: "Da Hood Alt Script", meta: "Private · local research", description: "A local research project exploring a control panel for owned test environments.", tags: ["Lua", "Local", "Research"] },
+    { id: "dahood-external", name: "Da Hood External", meta: "Private · local research", description: "A private interface study exploring overlays and input systems in controlled environments.", tags: ["C++", "External", "Local"] },
+    { id: "project-slayers", name: "Project Slayers 2 Script", meta: "Under development", description: "A work-in-progress Lua research project with automation concepts, tested only in controlled local environments.", tags: ["Lua", "WIP", "Research"] },
+    { id: "cs2-external", name: "Counter-Strike 2 External", meta: "Private · local research", description: "A private computer-vision and overlay study for local test environments.", tags: ["C++", "Overlay", "Research"] },
+    { id: "vencord", name: "Discord Spoofer & Fake Deafen", meta: "Vencord plugins", description: "Two Vencord plugin experiments exploring client-side presentation and audio-state UI in local testing.", tags: ["JavaScript", "Vencord", "Plugins"] },
+  ] },
 ]
 
 export default function Page() {
-  return (
-    <main className="relative min-h-screen">
-      <Hero
-        discordUserId={CONFIG.discordUserId}
-        discordUsername={CONFIG.discordUsername}
-        gunsUrl={CONFIG.gunsUrl}
-      />
-      <WorkSection groups={WORK} gunsUrl={CONFIG.gunsUrl} />
-      <ReviewsSection />
-      <Footer
-        name={CONFIG.name}
-        discordUsername={CONFIG.discordUsername}
-        gunsLolUrl={CONFIG.gunsUrl}
-      />
-    </main>
-  )
+  return <main className="site-shell"><div className="site-noise" /><Hero discordUserId={config.discordUserId} gunsUrl={config.gunsUrl} /><WorkSection groups={work} /><ReviewsSection /><Footer name={config.name} gunsLolUrl={config.gunsUrl} /></main>
 }
